@@ -1,11 +1,169 @@
-<!doctype html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>RE OS AI PRO — CRM Cloud</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,system-ui,-apple-system,sans-serif;background:#0f172a}#frame{width:100%;height:100%;border:0;display:block}#gate{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.97);backdrop-filter:blur(12px)}#card{width:min(390px,100%);box-sizing:border-box;background:#fff;border-radius:28px;padding:26px;box-shadow:0 25px 60px rgba(0,0,0,.35)}.brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}.logo{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#4f46e5,#6366f1);display:grid;place-items:center;color:#fff;font-size:20px;font-weight:800}.eyebrow{font-size:10px;font-weight:800;letter-spacing:.12em;color:#4f46e5}.title{font-size:20px;font-weight:800;color:#0f172a}.tabs{display:flex;gap:4px;background:#f1f5f9;padding:4px;border-radius:14px;margin-bottom:18px}.tabs button{flex:1;border:0;border-radius:10px;padding:10px;font-weight:800;background:transparent;color:#64748b;cursor:pointer}.tabs .on{background:#fff;color:#4f46e5}.field{margin:0 0 12px}.field label{display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:6px}.field input{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:14px;padding:13px;font-size:14px;outline:none}.submit{width:100%;border:0;border-radius:14px;padding:14px;background:#4f46e5;color:#fff;font-weight:800;cursor:pointer}.msg{min-height:18px;font-size:12px;font-weight:700;margin:6px 0 10px;color:#dc2626}.hint{text-align:center;color:#64748b;font-size:11px;line-height:1.5;margin-top:14px}#bar{position:fixed;top:12px;right:12px;z-index:5;display:none;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:8px 10px;font-size:11px;font-weight:700;color:#334155;box-shadow:0 8px 24px rgba(15,23,42,.15)}#bar button{margin-left:8px;border:0;border-radius:9px;padding:5px 8px;background:#fee2e2;color:#dc2626;font-size:10px;font-weight:800}</style></head><body><iframe id="frame" src="/legacy.html"></iframe><div id="bar"><span id="who"></span><button id="logout">Đăng xuất</button></div><div id="gate"><div id="card"><div class="brand"><div class="logo">⌂</div><div><div class="eyebrow">CRM CLOUD</div><div class="title">RE OS AI PRO</div></div></div><div class="tabs"><button id="lt" class="on">Đăng nhập</button><button id="st">Tạo tài khoản</button></div><div class="field"><label>Email</label><input id="email" type="email" autocomplete="email" placeholder="email@cuaban.com"></div><div class="field"><label>Mật khẩu</label><input id="pass" type="password" minlength="6" autocomplete="current-password" placeholder="Tối thiểu 6 ký tự"></div><div class="field" id="nw" style="display:none"><label>Tên môi giới</label><input id="name" type="text" placeholder="Tên hiển thị"></div><div id="msg" class="msg"></div><button id="submit" class="submit">Đăng nhập</button><div class="hint">Dữ liệu khách hàng và BĐS được lưu cloud, tách riêng theo tài khoản.</div></div></div><script>const URL='https://crzinaydjgqepffatqoo.supabase.co',KEY='sb_publishable_NhyivL-3owNWC6unb8GbZA_d135dx3i',sb=supabase.createClient(URL,KEY),f=document.getElementById('frame'),gate=document.getElementById('gate'),bar=document.getElementById('bar'),who=document.getElementById('who'),msg=document.getElementById('msg'),email=document.getElementById('email'),pass=document.getElementById('pass'),nameEl=document.getElementById('name'),nw=document.getElementById('nw'),submit=document.getElementById('submit');let mode='login',ready=false,user=null;
-const setMode=m=>{mode=m;const login=m==='login';lt.classList.toggle('on',login);st.classList.toggle('on',!login);nw.style.display=login?'none':'block';submit.textContent=login?'Đăng nhập':'Tạo tài khoản';msg.textContent='';};lt.onclick=()=>setMode('login');st.onclick=()=>setMode('signup');
-const price=v=>{const n=Number(v||0);return n>=1e9?(n/1e9).toLocaleString('vi-VN')+' TỶ':n?n.toLocaleString('vi-VN')+' VNĐ':'Liên hệ'};
-const run=code=>{try{return f.contentWindow.eval(code)}catch(e){console.error(e);return null}};
-const save=async(store,d)=>{const customer=store==='customers';const table=customer?'crm_customers':'crm_properties';const id=/^[0-9a-f-]{36}$/i.test(d.id||'')?d.id:crypto.randomUUID();const row=customer?{id,user_id:user.id,name:d.name,phone:d.phone,stage:d.stage||'hot',budget_vnd:Number(d.budgetVnd||0),location:d.location||'',notes:d.notes||'',score:Number(d.score||70),updated_at:new Date().toISOString()}:{id,user_id:user.id,title:d.title,type:d.type||'Nhà phố',code:d.code||('P-'+Date.now()),price_vnd:Number(d.priceVnd||0),area:d.area??null,width:d.width??null,length:d.length??null,bedrooms:d.bedrooms??null,bathrooms:d.bathrooms??null,floors:d.floors??null,district:d.district||'',map_url:d.mapUrl||'',images:Array.isArray(d.images)?d.images:[],updated_at:new Date().toISOString()};const {data,error}=await sb.from(table).upsert(row).select('id').single();if(error)throw error;return data.id};
-const get=async store=>{const table=store==='customers'?'crm_customers':'crm_properties';const {data,error}=await sb.from(table).select('*').order('updated_at',{ascending:false});if(error)throw error;return(data||[]).map(r=>store==='customers'?{id:r.id,name:r.name,phone:r.phone,stage:r.stage,budgetVnd:Number(r.budget_vnd||0),budgetDisplay:price(r.budget_vnd),location:r.location,notes:r.notes,score:r.score,updatedAt:Date.parse(r.updated_at||'')||Date.now()}:{id:r.id,title:r.title,type:r.type,code:r.code,priceVnd:Number(r.price_vnd||0),priceDisplay:price(r.price_vnd),area:r.area,width:r.width,length:r.length,bedrooms:r.bedrooms,bathrooms:r.bathrooms,floors:r.floors,district:r.district,mapUrl:r.map_url,images:Array.isArray(r.images)?r.images:[],updatedAt:Date.parse(r.updated_at||'')||Date.now()})};
-const del=async(store,id)=>{const table=store==='customers'?'crm_customers':'crm_properties';const {error}=await sb.from(table).delete().eq('id',id);if(error)throw error};
-async function bridge(u){user=u;ready=true;const localC=await Promise.resolve(run("DB.getAll('customers')")||[]),localP=await Promise.resolve(run("DB.getAll('properties')")||[]);window.__crmCloud={save, get, del};run("DB.getAll=async s=>parent.__crmCloud.get(s);DB.save=async(s,d)=>parent.__crmCloud.save(s,d);DB.delete=async(s,id)=>parent.__crmCloud.del(s,id);DB.exportBackup=async()=>{const x={customers:await DB.getAll('customers'),properties:await DB.getAll('properties'),exportedAt:new Date().toISOString()},b=new Blob([JSON.stringify(x,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='CRM_CLOUD_BACKUP_'+Date.now()+'.json';a.click();URL.revokeObjectURL(u);UI.showToast('Đã xuất Backup Cloud JSON.')};DB.clearAll=async()=>{UI.showConfirm('Xóa dữ liệu Cloud','Thao tác này xóa toàn bộ dữ liệu CRM của tài khoản.',async()=>{await parent.sb.from('crm_customers').delete().eq('user_id','${u.id}');await parent.sb.from('crm_properties').delete().eq('user_id','${u.id}');await State.load();UI.showToast('Đã xóa dữ liệu CRM.')})};State.load();void 0");if(localStorage.getItem('crm_migrated_'+u.id)!=='1'&&(localC.length||localP.length)){for(const x of localC)await save('customers',x);for(const x of localP)await save('properties',x);localStorage.setItem('crm_migrated_'+u.id,'1');await new Promise(r=>setTimeout(r,20));run('State.load()')}gate.style.display='none';bar.style.display='block';who.textContent=u.email||'';}
-f.addEventListener('load',async()=>{ready=true;const {data:{session}}=await sb.auth.getSession();if(session?.user){await sb.from('crm_profiles').upsert({user_id:session.user.id,display_name:session.user.user_metadata?.full_name||session.user.email?.split('@')[0]||'Môi giới'});await bridge(session.user)}else gate.style.display='grid';});
-submit.onclick=async()=>{msg.textContent='';submit.disabled=true;try{const e=email.value.trim(),p=pass.value;if(!e||!p)throw new Error('Nhập email và mật khẩu.');const r=mode==='login'?await sb.auth.signInWithPassword({email:e,password:p}):await sb.auth.signUp({email:e,password:p,options:{data:{full_name:nameEl.value.trim()||e.split('@')[0]}}});if(r.error)throw r.error;if(!r.data.session){msg.style.color='#059669';msg.textContent='Đăng ký thành công. Kiểm tra email để xác nhận.';return}await bridge(r.data.user)}catch(e){msg.style.color='#dc2626';msg.textContent=e.message||'Không thể đăng nhập.'}finally{submit.disabled=false}};
-logout.onclick=async()=>{await sb.auth.signOut();location.reload()};sb.auth.onAuthStateChange(async(event,session)=>{if(event==='SIGNED_OUT'){gate.style.display='grid';bar.style.display='none'}if(event==='SIGNED_IN'&&session?.user&&!user)await bridge(session.user)});</script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>RE OS AI PRO — CRM Cloud</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,system-ui,-apple-system,sans-serif;background:#0f172a}
+    #frame{position:fixed;inset:0;width:100%;height:100%;border:0;display:block}
+    #gate{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.97);backdrop-filter:blur(14px)}
+    #card{width:min(400px,100%);background:#fff;border-radius:28px;padding:26px;box-shadow:0 25px 70px rgba(0,0,0,.4)}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:20px}.logo{width:50px;height:50px;border-radius:16px;background:linear-gradient(135deg,#4f46e5,#6366f1);display:grid;place-items:center;color:#fff;font-size:22px;font-weight:900}.eyebrow{font-size:10px;font-weight:900;letter-spacing:.12em;color:#4f46e5}.title{font-size:21px;font-weight:900;color:#0f172a;margin-top:2px}
+    .tabs{display:flex;gap:4px;background:#f1f5f9;padding:4px;border-radius:14px;margin-bottom:18px}.tabs button{flex:1;border:0;border-radius:10px;padding:11px;background:transparent;color:#64748b;font-weight:800;cursor:pointer}.tabs button.active{background:#fff;color:#4f46e5;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+    .field{margin-bottom:12px}.field label{display:block;font-size:12px;font-weight:800;color:#334155;margin:0 0 6px}.field input{display:block;width:100%;border:1px solid #cbd5e1;border-radius:14px;padding:13px 14px;font-size:14px;outline:none}.field input:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+    #submit{width:100%;border:0;border-radius:14px;padding:14px;background:#4f46e5;color:#fff;font-weight:900;font-size:14px;cursor:pointer}#submit:disabled{opacity:.65;cursor:wait}
+    #msg{min-height:20px;margin:7px 0 8px;font-size:12px;font-weight:800;color:#dc2626}#msg.ok{color:#059669}.hint{text-align:center;color:#64748b;font-size:11px;line-height:1.55;margin-top:14px}
+    #bar{position:fixed;right:14px;top:14px;z-index:90;display:none;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:8px 10px;font-size:11px;font-weight:800;color:#334155;box-shadow:0 8px 24px rgba(15,23,42,.18)}#logout{margin-left:8px;border:0;border-radius:9px;padding:6px 9px;background:#fee2e2;color:#dc2626;font-size:10px;font-weight:900;cursor:pointer}
+    .cloud{position:fixed;left:14px;top:14px;z-index:90;display:none;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:900}
+  </style>
+</head>
+<body>
+  <iframe id="frame" src="/legacy.html" title="RE OS AI PRO"></iframe>
+  <div id="cloudBadge" class="cloud">☁ CRM CLOUD</div>
+  <div id="bar"><span id="who"></span><button id="logout" type="button">Đăng xuất</button></div>
+  <div id="gate">
+    <div id="card">
+      <div class="brand"><div class="logo">⌂</div><div><div class="eyebrow">CRM CLOUD</div><div class="title">RE OS AI PRO</div></div></div>
+      <div class="tabs"><button id="loginTab" class="active" type="button">Đăng nhập</button><button id="signupTab" type="button">Tạo tài khoản</button></div>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="email@cuaban.com"></div>
+      <div class="field"><label for="password">Mật khẩu</label><input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="Tối thiểu 6 ký tự"></div>
+      <div class="field" id="nameWrap" style="display:none"><label for="name">Tên môi giới</label><input id="name" type="text" placeholder="Tên hiển thị"></div>
+      <div id="msg"></div>
+      <button id="submit" type="button">Đăng nhập</button>
+      <div class="hint">Dữ liệu khách hàng và kho BĐS được lưu trên cloud và tách riêng theo tài khoản.</div>
+    </div>
+  </div>
+<script>
+(function(){
+  'use strict';
+  const SUPABASE_URL='https://crzinaydjgqepffatqoo.supabase.co';
+  const SUPABASE_KEY='sb_publishable_NhyivL-3owNWC6unb8GbZA_d135dx3i';
+  const $=id=>document.getElementById(id);
+  const gate=$('gate'),frame=$('frame'),bar=$('bar'),cloudBadge=$('cloudBadge'),who=$('who'),logout=$('logout');
+  const email=$('email'),password=$('password'),name=$('name'),nameWrap=$('nameWrap'),msg=$('msg'),submit=$('submit');
+  const loginTab=$('loginTab'),signupTab=$('signupTab');
+  let mode='login', currentUser=null, frameLoaded=false, frameReadyPromise=null;
+
+  function setMsg(text,ok){ msg.textContent=text||''; msg.className=ok?'ok':''; }
+  function setMode(next){ mode=next; const login=next==='login'; loginTab.classList.toggle('active',login); signupTab.classList.toggle('active',!login); nameWrap.style.display=login?'none':'block'; submit.textContent=login?'Đăng nhập':'Tạo tài khoản'; setMsg(''); }
+  loginTab.addEventListener('click',()=>setMode('login'));
+  signupTab.addEventListener('click',()=>setMode('signup'));
+  [email,password,name].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')submit.click()}));
+
+  function price(v){const n=Number(v||0);if(!n)return'Liên hệ';return n>=1e9?(n/1e9).toLocaleString('vi-VN')+' TỶ':n.toLocaleString('vi-VN')+' VNĐ';}
+  function getLegacy(){return frame.contentWindow||null;}
+  function showCloud(){gate.style.display='none';bar.style.display='block';cloudBadge.style.display='block';who.textContent=currentUser?.email||'';}
+  function showGate(){gate.style.display='flex';bar.style.display='none';cloudBadge.style.display='none';}
+
+  function waitFrame(){
+    if(frameReady) return Promise.resolve(getLegacy());
+    if(frameReadyPromise) return frameReadyPromise;
+    frameReadyPromise=new Promise((resolve,reject)=>{
+      const started=Date.now();
+      const poll=()=>{
+        const w=getLegacy();
+        if(w && w.DB && w.State){frameLoaded=true;frameReady=true;resolve(w);return;}
+        if(Date.now()-started>10000){reject(new Error('CRM giao diện chưa sẵn sàng. Hãy tải lại trang.'));return;}
+        setTimeout(poll,100);
+      };
+      poll();
+    });
+    return frameReadyPromise;
+  }
+
+  async function bridge(user){
+    currentUser=user;
+    const w=await waitFrame();
+    const localCustomers=await w.DB.getAll('customers');
+    const localProperties=await w.DB.getAll('properties');
+
+    const save=async(store,d)=>{
+      const customer=store==='customers';
+      const table=customer?'crm_customers':'crm_properties';
+      const validUuid=/^[0-9a-f-]{36}$/i.test(d.id||'');
+      const id=validUuid?d.id:crypto.randomUUID();
+      const row=customer?{
+        id,user_id:user.id,name:d.name||'',phone:d.phone||'',stage:d.stage||'hot',budget_vnd:Number(d.budgetVnd||0),location:d.location||'',notes:d.notes||'',score:Number(d.score||70),created_at:new Date().toISOString(),updated_at:new Date().toISOString()
+      }:{
+        id,user_id:user.id,title:d.title||'',type:d.type||'Nhà phố',code:d.code||('P-'+Date.now()),price_vnd:Number(d.priceVnd||0),area:d.area??null,width:d.width??null,length:d.length??null,bedrooms:d.bedrooms??null,bathrooms:d.bathrooms??null,floors:d.floors??null,district:d.district||'',map_url:d.mapUrl||'',images:Array.isArray(d.images)?d.images:[],created_at:new Date().toISOString(),updated_at:new Date().toISOString()
+      };
+      const result=await window.__sb.from(table).upsert(row).select('id').single();
+      if(result.error) throw result.error;
+      return result.data.id;
+    };
+    const get=async(store)=>{
+      const table=store==='customers'?'crm_customers':'crm_properties';
+      const result=await window.__sb.from(table).select('*').order('updated_at',{ascending:false});
+      if(result.error) throw result.error;
+      return (result.data||[]).map(r=>store==='customers'?{
+        id:r.id,name:r.name,phone:r.phone,stage:r.stage,budgetVnd:Number(r.budget_vnd||0),budgetDisplay:price(r.budget_vnd),location:r.location,notes:r.notes,score:r.score,updatedAt:Date.parse(r.updated_at||'')||Date.now()
+      }:{
+        id:r.id,title:r.title,type:r.type,code:r.code,priceVnd:Number(r.price_vnd||0),priceDisplay:price(r.price_vnd),area:r.area,width:r.width,length:r.length,bedrooms:r.bedrooms,bathrooms:r.bathrooms,floors:r.floors,district:r.district,mapUrl:r.map_url,images:Array.isArray(r.images)?r.images:[],updatedAt:Date.parse(r.updated_at||'')||Date.now()
+      });
+    };
+    const del=async(store,id)=>{const table=store==='customers'?'crm_customers':'crm_properties';const result=await window.__sb.from(table).delete().eq('id',id);if(result.error)throw result.error;};
+
+    window.__crmCloud={save,get,del};
+    w.DB.getAll=store=>window.__crmCloud.get(store);
+    w.DB.save=(store,data)=>window.__crmCloud.save(store,data);
+    w.DB.delete=(store,id)=>window.__crmCloud.del(store,id);
+    w.DB.exportBackup=async()=>{
+      const data={customers:await w.DB.getAll('customers'),properties:await w.DB.getAll('properties'),exportedAt:new Date().toISOString()};
+      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+      a.href=url;a.download='CRM_CLOUD_BACKUP_'+Date.now()+'.json';a.click();URL.revokeObjectURL(url);
+      if(w.UI&&w.UI.showToast)w.UI.showToast('Đã xuất Backup Cloud JSON.');
+    };
+    w.DB.clearAll=async()=>{
+      if(!w.UI||!w.UI.showConfirm)return;
+      w.UI.showConfirm('Xóa dữ liệu Cloud','Thao tác này xóa toàn bộ dữ liệu CRM của tài khoản.',async()=>{
+        const a=await window.__sb.from('crm_customers').delete().eq('user_id',user.id);if(a.error)throw a.error;
+        const b=await window.__sb.from('crm_properties').delete().eq('user_id',user.id);if(b.error)throw b.error;
+        await w.State.load();w.UI.showToast('Đã xóa dữ liệu CRM.');
+      });
+    };
+    if(w.Auth) w.Auth.session={user:{id:user.id,email:user.email,user_metadata:user.user_metadata||{}}};
+    const headerLabel=w.document.querySelector('header p');
+    if(headerLabel)headerLabel.innerHTML='<i class="fa-solid fa-cloud mr-1"></i> CRM CLOUD';
+
+    const migrated=localStorage.getItem('crm_migrated_'+user.id)==='1';
+    if(!migrated && (localCustomers.length||localProperties.length)){
+      for(const c of localCustomers) await save('customers',c);
+      for(const p of localProperties) await save('properties',p);
+      localStorage.setItem('crm_migrated_'+user.id,'1');
+    }
+    await w.State.load();
+    showCloud();
+  }
+
+  async function auth(){
+    setMsg('');submit.disabled=true;submit.textContent=mode==='login'?'Đang đăng nhập…':'Đang tạo tài khoản…';
+    try{
+      const e=email.value.trim(),p=password.value;
+      if(!e||!p)throw new Error('Vui lòng nhập email và mật khẩu.');
+      if(!window.supabase||typeof window.supabase.createClient!=='function')throw new Error('Không tải được thư viện Supabase. Hãy tải lại trang.');
+      const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);window.__sb=sb;
+      let result=mode==='login'?await sb.auth.signInWithPassword({email:e,password:p}):await sb.auth.signUp({email:e,password:p,options:{data:{full_name:name.value.trim()||e.split('@')[0]}}});
+      if(result.error)throw result.error;
+      if(!result.data.session){setMsg('Đăng ký thành công. Hãy kiểm tra email để xác nhận rồi đăng nhập.',true);return;}
+      await bridge(result.data.user);
+    }catch(err){console.error(err);setMsg(err?.message||'Không thể đăng nhập.');}
+    finally{submit.disabled=false;if(gate.style.display!=='none')submit.textContent=mode==='login'?'Đăng nhập':'Tạo tài khoản';}
+  }
+  submit.addEventListener('click',auth);
+
+  frame.addEventListener('load',async()=>{frameLoaded=true;try{
+    await waitFrame();
+    const sb=window.__sb||(window.supabase&&window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY));
+    if(!sb){showGate();return;}window.__sb=sb;
+    const sessionResult=await sb.auth.getSession();
+    const session=sessionResult.data?.session;
+    if(session?.user){try{await sb.from('crm_profiles').upsert({user_id:session.user.id,display_name:session.user.user_metadata?.full_name||session.user.email?.split('@')[0]||'Môi giới'});}catch(e){console.warn(e);}await bridge(session.user);}else showGate();
+  }catch(err){console.error(err);showGate();setMsg('CRM chưa sẵn sàng, hãy tải lại trang.');}});
+
+  logout.addEventListener('click',async()=>{try{if(window.__sb)await window.__sb.auth.signOut();}finally{currentUser=null;showGate();location.reload();}});
+})();
+</script>
+</body>
+</html>
