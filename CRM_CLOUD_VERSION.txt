@@ -1,0 +1,1 @@
+Supabase CRM cloud integration prepared in local workspace; index.html will be updated via Git tree commit.
