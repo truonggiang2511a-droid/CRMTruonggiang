@@ -1,0 +1,1 @@
+CRM Cloud migration in progress: Supabase backend is ready, Vercel production is linked to GitHub, and the legacy UI is preserved while the Cloud entrypoint is being promoted.
