@@ -1,0 +1,1 @@
+CRM Cloud schema is deployed in Supabase project giang-ea-control. Frontend integration prepared locally.
