@@ -1,0 +1,1 @@
+Production entrypoint: index.html. Legacy CRM UI preserved at legacy.html. Supabase CRM tables use RLS by auth.uid(). Vercel deploys from main.
