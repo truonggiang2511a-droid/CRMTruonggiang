@@ -1,0 +1,1 @@
+CRM cloud backend: Supabase project giang-ea-control. Frontend uses publishable key with RLS and auth.uid() isolation.
