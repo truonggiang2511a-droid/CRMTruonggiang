@@ -27,7 +27,6 @@ logout.onclick=async()=>{await sb.auth.signOut();location.reload()};
 function show(u){gate.style.display='none';bar.style.display='block';cloud.style.display='block';who.textContent=u?.email||'';frame.style.display='block';setTimeout(enhance,250)}
 function gateShow(){gate.style.display='flex';bar.style.display='none';cloud.style.display='none';frame.style.display='block'}
 loginTab=$('loginTab');signupTab=$('signupTab');sb.auth.onAuthStateChange((ev,s)=>{if(ev==='SIGNED_OUT')gateShow();else if((ev==='SIGNED_IN'||ev==='INITIAL_SESSION')&&s?.user)show(s.user)});gateShow();setMode('login');
-
 const norm=v=>String(v||'').trim().toLowerCase(), days=ts=>ts?Math.max(0,Math.floor((Date.now()-Number(ts))/86400000)):999;
 const doneKey=(type,id)=>`reos-v2-${type}-${id}`;const done=(t,id)=>localStorage.getItem(doneKey(t,id))==='1';
 function finish(t,id){localStorage.setItem(doneKey(t,id),'1');enhance()}
@@ -44,4 +43,5 @@ frame.addEventListener('load',()=>setTimeout(enhance,300));
 })();
 </script>
 <script src="/ai-deal-closer.js"></script>
+<script src="/reos-premium.js"></script>
 </body></html>
