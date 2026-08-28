@@ -32,7 +32,7 @@ const norm=v=>String(v||'').trim().toLowerCase(), days=ts=>ts?Math.max(0,Math.fl
 const doneKey=(type,id)=>`reos-v2-${type}-${id}`;const done=(t,id)=>localStorage.getItem(doneKey(t,id))==='1';
 function finish(t,id){localStorage.setItem(doneKey(t,id),'1');enhance()}
 function bestMatch(c,ps){let best=null;for(const p of ps){let s=0,cl=norm(c.location),pd=norm(p.district);if(cl&&pd&&(pd.includes(cl)||cl.includes(pd)))s+=55;else if(cl&&pd&&cl.split(/[ ,.-]+/).some(x=>x.length>2&&pd.includes(x)))s+=25;const b=+c.budgetVnd||0,pr=+p.priceVnd||0;if(b&&pr){if(pr<=b)s+=35;else if(pr<=b*1.1)s+=20;else if(pr<=b*1.2)s+=8}if(!best||s>best.score)best={p,score:Math.min(100,s)}}return best}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function esc(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
 function launch(fn,arg){try{fn(arg)}catch(e){}}
 function enhance(){try{const w=frame.contentWindow,d=w.document,S=w.State;if(!S||!d.getElementById('home-ai-brief-content'))return setTimeout(enhance,500);const cs=[...(S.customers||[])],ps=[...(S.properties||[])];const hot=cs.filter(c=>c.stage==='hot').sort((a,b)=>(b.score||0)-(a.score||0));const stale=cs.filter(c=>days(c.updatedAt)>=3).sort((a,b)=>days(b.updatedAt)-days(a.updatedAt));const matches=cs.map(c=>({c,b:bestMatch(c,ps)})).filter(x=>x.b&&x.b.score>=55).sort((a,b)=>(b.b.score+(b.c.score||0))-(a.b.score+(a.c.score||0)));
 let tasks=[];hot.slice(0,4).forEach(c=>tasks.push({t:'call',id:c.id,p:95,title:`Gọi ${c.name}`,desc:`Lead nóng • ${c.location||'chưa rõ khu vực'} • ${c.budgetDisplay||'chưa rõ ngân sách'}`,cta:'Gọi',go:`location.href='tel:${esc(c.phone||'')}'`}));matches.slice(0,3).forEach(x=>tasks.push({t:'match',id:x.c.id,p:x.b.score,title:`Gửi ${x.b.p.code||'căn phù hợp'} cho ${x.c.name}`,desc:`Match ${x.b.score}% • ${x.b.p.priceDisplay||'Liên hệ'} • ${x.b.p.district||''}`,cta:'Mở căn',go:`parent.launch(parent.frame.contentWindow.Actions.openPropertyDetail,'${esc(x.b.p.id)}')`}));stale.slice(0,3).forEach(c=>tasks.push({t:'follow',id:c.id,p:60,title:`Follow-up ${c.name}`,desc:`Đã ${days(c.updatedAt)} ngày chưa cập nhật`,cta:'Mở khách',go:`parent.launch(parent.frame.contentWindow.FormControllers.openCustomerForm,'${esc(c.id)}')`}));tasks.sort((a,b)=>b.p-a.p);const active=tasks.filter(x=>!done(x.t,x.id)).slice(0,6),doneN=tasks.filter(x=>done(x.t,x.id)).length;
@@ -43,4 +43,5 @@ const home=d.getElementById('view-home');if(home&&!d.getElementById('ai-goals-pa
 frame.addEventListener('load',()=>setTimeout(enhance,300));
 })();
 </script>
+<script src="/ai-deal-closer.js"></script>
 </body></html>
