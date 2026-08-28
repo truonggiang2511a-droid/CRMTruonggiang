@@ -18,12 +18,14 @@
 #resend{display:none;width:100%;margin-top:8px;border:1px solid #cbd5e1;border-radius:12px;padding:11px;background:#fff;color:#334155;font-weight:800;font-size:12px;cursor:pointer}
 #bar{position:fixed;right:14px;top:14px;z-index:110;display:none;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:8px 10px;font-size:11px;font-weight:800;color:#334155;box-shadow:0 8px 24px rgba(15,23,42,.18)}#logout{margin-left:8px;border:0;border-radius:9px;padding:6px 9px;background:#fee2e2;color:#dc2626;font-size:10px;font-weight:900;cursor:pointer}
 .cloud{position:fixed;left:14px;top:14px;z-index:110;display:none;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:900}
+#enhance-status{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:120;background:rgba(15,23,42,.92);color:#fff;border-radius:999px;padding:7px 12px;font-size:10px;font-weight:800;display:none}
 </style>
 </head>
 <body>
 <iframe id="frame" src="/legacy.html" title="RE OS AI PRO"></iframe>
 <div id="cloudBadge" class="cloud">☁ CRM CLOUD</div>
 <div id="bar"><span id="who"></span><button id="logout" type="button">Đăng xuất</button></div>
+<div id="enhance-status">AI Sales Brief đã sẵn sàng</div>
 <div id="gate"><div id="card">
 <div class="brand"><div class="logo">⌂</div><div><div class="eyebrow">CRM CLOUD</div><div class="title">RE OS AI PRO</div></div></div>
 <div class="tabs"><button id="loginTab" class="active" type="button">Đăng nhập</button><button id="signupTab" type="button">Tạo tài khoản</button></div>
@@ -45,7 +47,7 @@ function setMsg(text,ok=false){msg.textContent=text||'';msg.className=ok?'ok':''
 function setMode(next){mode=next;const login=next==='login';loginTab.classList.toggle('active',login);signupTab.classList.toggle('active',!login);nameWrap.style.display=login?'none':'block';submit.textContent=login?'Đăng nhập':'Tạo tài khoản';setMsg('');resend.style.display='none'}
 loginTab.onclick=()=>setMode('login');signupTab.onclick=()=>setMode('signup');
 [email,password,name].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submit.click()}}));
-function showCloud(user){currentUser=user;gate.style.display='none';bar.style.display='block';cloud.style.display='block';who.textContent=user?.email||'';frame.style.display='block'}
+function showCloud(user){currentUser=user;gate.style.display='none';bar.style.display='block';cloud.style.display='block';who.textContent=user?.email||'';frame.style.display='block';setTimeout(enhanceLegacy,250)}
 function showGate(){gate.style.display='flex';bar.style.display='none';cloud.style.display='none';frame.style.display='block'}
 async function ensureProfile(user){try{await sb.from('crm_profiles').upsert({user_id:user.id,display_name:user.user_metadata?.full_name||user.email?.split('@')[0]||'Môi giới'},{onConflict:'user_id'});}catch(e){console.warn('profile:',e.message)}}
 async function handleAuth(){setMsg('');resend.style.display='none';submit.disabled=true;submit.textContent=mode==='login'?'Đang đăng nhập…':'Đang tạo tài khoản…';try{
@@ -60,8 +62,48 @@ submit.onclick=handleAuth;
 resend.onclick=async()=>{const e=email.value.trim();if(!e){setMsg('Nhập email trước.');return}resend.disabled=true;try{const r=await sb.auth.resend({type:'signup',email:e,options:{emailRedirectTo:location.origin+'/'}});if(r.error)throw r.error;setMsg('Đã gửi lại email xác nhận. Hãy kiểm tra Spam/Quảng cáo.',true)}catch(e){setMsg(e.message||'Không gửi được email')}finally{resend.disabled=false}};
 logout.onclick=async()=>{await sb.auth.signOut();location.reload()};
 sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){currentUser=null;showGate()}else if((event==='SIGNED_IN'||event==='INITIAL_SESSION')&&session?.user){ensureProfile(session.user);showCloud(session.user)}});
-showGate();
-setMode('login');
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function norm(v){return String(v||'').trim().toLowerCase();}
+function daysSince(ts){if(!ts)return 999;return Math.floor((Date.now()-Number(ts))/86400000)}
+function matchCustomerProperty(c,p){
+  let s=0;const cl=norm(c.location),pd=norm(p.district);if(cl&&pd&&(pd.includes(cl)||cl.includes(pd)))s+=55;else if(cl&&pd&&cl.split(/[ ,.-]+/).some(x=>x.length>2&&pd.includes(x)))s+=25;
+  const b=Number(c.budgetVnd)||0,pr=Number(p.priceVnd)||0;if(b&&pr){if(pr<=b)s+=35;else if(pr<=b*1.1)s+=20;else if(pr<=b*1.2)s+=8}
+  return Math.min(100,s);
+}
+function taskKey(type,id){return `reos-ai-done-${type}-${id}`}
+function isDone(type,id){return localStorage.getItem(taskKey(type,id))==='1'}
+function markDone(type,id){localStorage.setItem(taskKey(type,id),'1');enhanceLegacy()}
+function openLegacyCustomer(id){try{frame.contentWindow.FormControllers.openCustomerForm(id)}catch(e){}}
+function openLegacyProp(id){try{frame.contentWindow.Actions.openPropertyDetail(id)}catch(e){}}
+function tel(phone){if(phone)window.open('tel:'+phone,'_self')}
+function zalo(phone){try{frame.contentWindow.Actions.openZalo(phone)}catch(e){}}
+
+function enhanceLegacy(){
+  try{
+    const w=frame.contentWindow,d=w.document,State=w.State;if(!State||!d.getElementById('home-ai-brief-content'))return setTimeout(enhanceLegacy,400);
+    const customers=Array.isArray(State.customers)?State.customers:[],properties=Array.isArray(State.properties)?State.properties:[];
+    const root=d.getElementById('home-ai-brief-content');
+    if(!root)return;
+    const hot=[...customers].sort((a,b)=>(b.score||0)-(a.score||0)).filter(c=>c.stage==='hot');
+    const stale=[...customers].filter(c=>daysSince(c.updatedAt)>=3).sort((a,b)=>daysSince(b.updatedAt)-daysSince(a.updatedAt));
+    const candidates=customers.map(c=>{let best=null;for(const p of properties){const sc=matchCustomerProperty(c,p);if(!best||sc>best.score)best={p,score:sc}}return {c,best}}).filter(x=>x.best&&x.best.score>=55).sort((a,b)=>((b.c.score||0)+b.best.score)-((a.c.score||0)+a.best.score));
+    const topCalls=hot.length?hot.slice(0,3):customers.slice(0,3);
+    const tasks=[];
+    topCalls.forEach(c=>tasks.push({type:'call',id:c.id,priority:c.stage==='hot'?95:80,title:`Gọi lại ${c.name}`,desc:`Lead ${c.stage==='hot'?'NÓNG':'tiềm năng'} • ${c.location||'chưa rõ nhu cầu'} • ${c.budgetDisplay||'chưa có ngân sách'}`,cta:'Gọi',action:`tel('${String(c.phone||'').replace(/'/g,"\\'")}')`,done:isDone('call',c.id)}));
+    candidates.slice(0,3).forEach(x=>tasks.push({type:'match',id:x.c.id,priority:x.best.score,title:`Gửi căn ${x.best.p.code} cho ${x.c.name}`,desc:`Match ${x.best.score}% • ${x.best.p.priceDisplay||'Liên hệ'} • ${x.best.p.district||''}`,cta:'Mở căn',action:`openLegacyProp('${String(x.best.p.id).replace(/'/g,"\\'")}')`,done:isDone('match',x.c.id)}));
+    stale.slice(0,2).forEach(c=>tasks.push({type:'follow',id:c.id,priority:60,title:`Follow-up ${c.name}`,desc:`Đã ${daysSince(c.updatedAt)} ngày chưa cập nhật • nên liên hệ lại hôm nay`,cta:'Mở khách',action:`openLegacyCustomer('${String(c.id).replace(/'/g,"\\'")}')`,done:isDone('follow',c.id)}));
+    tasks.sort((a,b)=>Number(b.priority)-Number(a.priority));
+    const active=tasks.filter(t=>!t.done).slice(0,5),doneCount=tasks.filter(t=>t.done).length;
+    let html=`<div style="margin-bottom:10px" class="bg-white/10 p-3 rounded-2xl border border-white/10"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><div style="font-size:10px;font-weight:900;color:#c7d2fe;letter-spacing:.08em;text-transform:uppercase">AI SALES BRIEF • ${new Date().toLocaleDateString('vi-VN')}</div><div style="font-size:18px;font-weight:900;color:#fff;margin-top:3px">${customers.length?`Hôm nay ưu tiên ${Math.max(1,active.length)} việc để tạo giao dịch.`:'Chưa đủ dữ liệu để lập kế hoạch.'}</div></div><div style="font-size:10px;font-weight:900;padding:7px 9px;border-radius:999px;background:rgba(16,185,129,.16);color:#6ee7b7">${doneCount}/${tasks.length} hoàn tất</div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px"><div style="background:rgba(255,255,255,.08);padding:8px;border-radius:12px"><div style="font-size:18px;font-weight:900;color:#fff">${hot.length}</div><div style="font-size:9px;color:#cbd5e1">Lead nóng</div></div><div style="background:rgba(255,255,255,.08);padding:8px;border-radius:12px"><div style="font-size:18px;font-weight:900;color:#fff">${candidates.length}</div><div style="font-size:9px;color:#cbd5e1">Match tốt</div></div><div style="background:rgba(255,255,255,.08);padding:8px;border-radius:12px"><div style="font-size:18px;font-weight:900;color:#fff">${stale.length}</div><div style="font-size:9px;color:#cbd5e1">Cần follow-up</div></div></div></div>`;
+    if(!active.length){html+=`<div class="bg-emerald-50 text-emerald-800 p-4 rounded-[20px] text-xs font-bold border border-emerald-100">✅ Hôm nay đã xử lý hết các việc AI đang thấy. Hãy thêm khách mới hoặc cập nhật kho để AI lập kế hoạch tiếp theo.</div>`}
+    active.forEach((t,i)=>{const badge=i===0?'ƯU TIÊN #1':`#${i+1}`;html+=`<div class="bg-white p-4 rounded-[20px] shadow-lg text-slate-900 border-l-4 ${i===0?'border-primary':'border-slate-200'}" style="margin-top:8px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span style="font-size:9px;font-weight:900;color:#fff;background:${i===0?'#4f46e5':'#64748b'};padding:5px 8px;border-radius:7px">${badge}</span><span style="font-size:9px;font-weight:900;color:#059669;background:#ecfdf5;padding:5px 8px;border-radius:7px">AI ${t.priority}%</span></div><div style="font-size:13px;font-weight:900;margin-top:8px">${esc(t.title)}</div><div style="font-size:10px;color:#64748b;font-weight:700;margin-top:4px;line-height:1.5">${esc(t.desc)}</div><div style="display:flex;gap:7px;margin-top:9px"><button onclick="parent.${t.action}" style="flex:1;border:0;background:#0f172a;color:#fff;padding:9px;border-radius:11px;font-size:10px;font-weight:900">${esc(t.cta)}</button><button onclick="parent.markDone('${t.type}','${String(t.id).replace(/'/g,"\\'")}')" style="width:38px;border:0;background:#ecfdf5;color:#059669;border-radius:11px;font-size:12px;font-weight:900" title="Đánh dấu đã xử lý">✓</button></div></div>`});
+    root.innerHTML=html;
+    const status=document.getElementById('enhance-status');status.style.display='block';setTimeout(()=>status.style.display='none',1800);
+  }catch(err){console.warn('AI enhance',err)}
+}
+frame.addEventListener('load',()=>setTimeout(enhanceLegacy,300));
+showGate();setMode('login');
 })();
 </script>
 </body>
